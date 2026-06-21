@@ -22,8 +22,17 @@ canvas {
   cursor: pointer;
 }
 
-p {
+.game-info {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.game-info p {
   font-size: 20px;
+  margin: 5px 0;
 }
 
 .instruction {
