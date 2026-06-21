@@ -16,7 +16,26 @@
   <p>Score: <span id="score">0</span></p>
   <p class="instruction">Use arrow keys to move the snake.</p>
 
-  <button onclick="restartGame()">Restart Game</button>
+  <div id="setupControls">
+    <div class="level-row">
+      <label for="difficulty">Choose Level:</label>
+
+      <select id="difficulty">
+        <option value="220">Easy</option>
+        <option value="150" selected>Medium</option>
+        <option value="90">Hard</option>
+      </select>
+    </div>
+
+    <div class="button-row">
+      <button id="startButton" onclick="startGame()">Start Game</button>
+    </div>
+  </div>
+
+  <div class="button-row">
+    <button id="restartButton" onclick="restartGame()">Restart Game</button>
+    <button id="pauseButton" onclick="togglePauseGame()">Pause Game</button>
+  </div>
 
   <script src="script.js"></script>
 </body>
