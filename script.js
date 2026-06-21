@@ -41,17 +41,29 @@ function changeDirection(event) {
     event.preventDefault();
   }
 
+  if (event.key === "ArrowUp") {
+    setDirection("UP");
+  } else if (event.key === "ArrowDown") {
+    setDirection("DOWN");
+  } else if (event.key === "ArrowLeft") {
+    setDirection("LEFT");
+  } else if (event.key === "ArrowRight") {
+    setDirection("RIGHT");
+  }
+}
+
+function setDirection(newDirection) {
   if (!gameRunning) {
     return;
   }
 
-  if (event.key === "ArrowUp" && direction !== "DOWN") {
+  if (newDirection === "UP" && direction !== "DOWN") {
     direction = "UP";
-  } else if (event.key === "ArrowDown" && direction !== "UP") {
+  } else if (newDirection === "DOWN" && direction !== "UP") {
     direction = "DOWN";
-  } else if (event.key === "ArrowLeft" && direction !== "RIGHT") {
+  } else if (newDirection === "LEFT" && direction !== "RIGHT") {
     direction = "LEFT";
-  } else if (event.key === "ArrowRight" && direction !== "LEFT") {
+  } else if (newDirection === "RIGHT" && direction !== "LEFT") {
     direction = "RIGHT";
   }
 }
