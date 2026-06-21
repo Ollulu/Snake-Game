@@ -54,13 +54,11 @@ function handleCanvasClick() {
     return;
   }
 
-  // If the start screen is showing, clicking the board starts the game
   if (setupControls.style.display !== "none") {
     startGame();
     return;
   }
 
-  // If the game over screen is showing, clicking the board returns to the start screen
   restartGame();
 }
 
@@ -265,7 +263,6 @@ function updateGame() {
     headX += box;
   }
 
-  // Wall wrap effect
   if (headX < 0) {
     headX = canvas.width - box;
   } else if (headX >= canvas.width) {
@@ -289,7 +286,6 @@ function updateGame() {
     snake.pop();
   }
 
-  // Check self collision
   for (let i = 0; i < snake.length; i++) {
     if (headX === snake[i].x && headY === snake[i].y) {
       gameOver();
@@ -321,7 +317,8 @@ function drawGame(currentTime) {
   ctx.fillStyle = "red";
   ctx.fillRect(food.x, food.y, box, box);
 
-  // Draw smooth snake
+  const smoothParts = [];
+
   for (let i = 0; i < snake.length; i++) {
     const currentPart = snake[i];
     const previousPart = previousSnake[i] || currentPart;
@@ -340,16 +337,85 @@ function drawGame(currentTime) {
       canvas.height
     );
 
-    if (i === 0) {
-      ctx.fillStyle = "lime";
-    } else {
-      ctx.fillStyle = "green";
-    }
-
-    drawWrappedBlock(smoothX, smoothY);
+    smoothParts.push({
+      x: smoothX,
+      y: smoothY
+    });
   }
 
+  drawCurvedSnake(smoothParts);
+
   animationFrameId = requestAnimationFrame(drawGame);
+}
+
+function drawCurvedSnake(parts) {
+  if (parts.length === 0) {
+    return;
+  }
+
+  if (parts.length === 1) {
+    drawWrappedRoundedRect(parts[0].x, parts[0].y, box, box, 6, "lime");
+    return;
+  }
+
+  const centers = getContinuousCenters(parts);
+
+  ctx.save();
+
+  ctx.strokeStyle = "green";
+  ctx.lineWidth = box;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  const offsetsX = [-canvas.width, 0, canvas.width];
+  const offsetsY = [-canvas.height, 0, canvas.height];
+
+  for (let offsetX of offsetsX) {
+    for (let offsetY of offsetsY) {
+      ctx.beginPath();
+      ctx.moveTo(centers[0].x + offsetX, centers[0].y + offsetY);
+
+      for (let i = 1; i < centers.length; i++) {
+        ctx.lineTo(centers[i].x + offsetX, centers[i].y + offsetY);
+      }
+
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+
+  // Draw the head on top
+  drawWrappedRoundedRect(parts[0].x, parts[0].y, box, box, 7, "lime");
+}
+
+function getContinuousCenters(parts) {
+  const centers = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    let x = parts[i].x + box / 2;
+    let y = parts[i].y + box / 2;
+
+    if (i > 0) {
+      const previous = centers[i - 1];
+
+      if (x - previous.x > canvas.width / 2) {
+        x -= canvas.width;
+      } else if (previous.x - x > canvas.width / 2) {
+        x += canvas.width;
+      }
+
+      if (y - previous.y > canvas.height / 2) {
+        y -= canvas.height;
+      } else if (previous.y - y > canvas.height / 2) {
+        y += canvas.height;
+      }
+    }
+
+    centers.push({ x, y });
+  }
+
+  return centers;
 }
 
 function getSmoothPosition(start, end, progress, size) {
@@ -376,13 +442,38 @@ function getSmoothPosition(start, end, progress, size) {
   return position;
 }
 
-function drawWrappedBlock(x, y) {
-  ctx.fillRect(x, y, box, box);
+function drawWrappedRoundedRect(x, y, width, height, radius, color) {
+  const offsetsX = [-canvas.width, 0, canvas.width];
+  const offsetsY = [-canvas.height, 0, canvas.height];
 
-  ctx.fillRect(x - canvas.width, y, box, box);
-  ctx.fillRect(x + canvas.width, y, box, box);
-  ctx.fillRect(x, y - canvas.height, box, box);
-  ctx.fillRect(x, y + canvas.height, box, box);
+  ctx.fillStyle = color;
+
+  for (let offsetX of offsetsX) {
+    for (let offsetY of offsetsY) {
+      drawRoundedRect(
+        x + offsetX,
+        y + offsetY,
+        width,
+        height,
+        radius
+      );
+    }
+  }
+}
+
+function drawRoundedRect(x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function gameOver() {
