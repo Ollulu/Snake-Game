@@ -70,3 +70,23 @@ button {
 #pauseButton {
   display: none;
 }
+
+.mobile-controls {
+  display: none;
+  margin-top: 15px;
+}
+
+.mobile-controls button {
+  width: 65px;
+  height: 55px;
+  font-size: 24px;
+  margin: 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+@media (max-width: 700px) {
+  .mobile-controls {
+    display: block;
+  }
+}
