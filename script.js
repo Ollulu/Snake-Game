@@ -1,6 +1,8 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreText = document.getElementById("score");
+const highScoreText = document.getElementById("highScore");
+const timerText = document.getElementById("timer");
 const difficultySelect = document.getElementById("difficulty");
 const setupControls = document.getElementById("setupControls");
 const restartButton = document.getElementById("restartButton");
@@ -17,12 +19,17 @@ let score = 0;
 
 let gameInterval;
 let animationFrameId;
+let timerInterval;
+let elapsedSeconds = 0;
+
 let lastMoveTime = 0;
 let gameRunning = false;
 let gamePaused = false;
+let currentLevelName = "medium";
 
 document.addEventListener("keydown", changeDirection);
 canvas.addEventListener("click", handleCanvasClick);
+difficultySelect.addEventListener("change", updateHighScoreDisplay);
 
 function changeDirection(event) {
   if (
@@ -51,6 +58,7 @@ function changeDirection(event) {
 
 function handleCanvasClick() {
   if (gameRunning || gamePaused) {
+    togglePauseGame();
     return;
   }
 
@@ -60,6 +68,61 @@ function handleCanvasClick() {
   }
 
   restartGame();
+}
+
+function getSelectedLevelName() {
+  return difficultySelect.options[difficultySelect.selectedIndex].text.toLowerCase();
+}
+
+function getHighScoreKey() {
+  return "snakeHighScore_" + currentLevelName;
+}
+
+function getHighScore() {
+  return Number(localStorage.getItem(getHighScoreKey())) || 0;
+}
+
+function saveHighScore() {
+  const currentHighScore = getHighScore();
+
+  if (score > currentHighScore) {
+    localStorage.setItem(getHighScoreKey(), score);
+  }
+
+  updateHighScoreDisplay();
+}
+
+function updateHighScoreDisplay() {
+  currentLevelName = getSelectedLevelName();
+  highScoreText.textContent = getHighScore();
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = elapsedSeconds % 60;
+
+  const formattedMinutes = String(minutes).padStart(2, "0");
+  const formattedSeconds = String(seconds).padStart(2, "0");
+
+  timerText.textContent = formattedMinutes + ":" + formattedSeconds;
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+
+  timerInterval = setInterval(function () {
+    elapsedSeconds++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+}
+
+function resetTimer() {
+  elapsedSeconds = 0;
+  updateTimerDisplay();
 }
 
 function createFood() {
@@ -103,6 +166,7 @@ function drawStartScreen() {
 
   clearInterval(gameInterval);
   cancelAnimationFrame(animationFrameId);
+  stopTimer();
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -118,6 +182,7 @@ function drawStartScreen() {
   ctx.font = "18px Arial";
   ctx.fillText("Click to Start the Game", canvas.width / 2, 210);
 
+  updateHighScoreDisplay();
   showSetupControls();
 }
 
@@ -150,7 +215,7 @@ function drawPauseScreen() {
 
   ctx.fillStyle = "white";
   ctx.font = "18px Arial";
-  ctx.fillText("Click Resume Game to continue", canvas.width / 2, 220);
+  ctx.fillText("Click to continue", canvas.width / 2, 220);
 }
 
 function resetGameData() {
@@ -166,21 +231,27 @@ function resetGameData() {
   direction = "RIGHT";
   score = 0;
   scoreText.textContent = score;
+
+  resetTimer();
 }
 
 function startGame() {
   resetGameData();
 
   gameSpeed = Number(difficultySelect.value);
+  currentLevelName = getSelectedLevelName();
+  updateHighScoreDisplay();
 
   clearInterval(gameInterval);
   cancelAnimationFrame(animationFrameId);
+  stopTimer();
 
   gameRunning = true;
   gamePaused = false;
   lastMoveTime = performance.now();
 
   showGameControls();
+  startTimer();
 
   gameInterval = setInterval(updateGame, gameSpeed);
   animationFrameId = requestAnimationFrame(drawGame);
@@ -192,6 +263,7 @@ function restartGame() {
 
   clearInterval(gameInterval);
   cancelAnimationFrame(animationFrameId);
+  stopTimer();
 
   snake = [];
   previousSnake = [];
@@ -199,6 +271,8 @@ function restartGame() {
   direction = "RIGHT";
   score = 0;
   scoreText.textContent = score;
+
+  resetTimer();
 
   pauseButton.textContent = "Pause Game";
 
@@ -216,6 +290,7 @@ function togglePauseGame() {
 
     clearInterval(gameInterval);
     cancelAnimationFrame(animationFrameId);
+    stopTimer();
 
     pauseButton.textContent = "Resume Game";
     drawPauseScreen();
@@ -229,6 +304,8 @@ function togglePauseGame() {
 
     clearInterval(gameInterval);
     cancelAnimationFrame(animationFrameId);
+
+    startTimer();
 
     gameInterval = setInterval(updateGame, gameSpeed);
     animationFrameId = requestAnimationFrame(drawGame);
@@ -298,6 +375,12 @@ function updateGame() {
   if (ateFood) {
     score++;
     scoreText.textContent = score;
+
+    if (score > getHighScore()) {
+      localStorage.setItem(getHighScoreKey(), score);
+      updateHighScoreDisplay();
+    }
+
     food = createFood();
   }
 
@@ -313,7 +396,6 @@ function drawGame(currentTime) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw food
   ctx.fillStyle = "red";
   ctx.fillRect(food.x, food.y, box, box);
 
@@ -358,7 +440,7 @@ function drawCurvedSnake(parts) {
     return;
   }
 
-  const centers = getContinuousCenters(parts);
+    const centers = getContinuousCenters(parts);
 
   ctx.save();
 
@@ -385,7 +467,6 @@ function drawCurvedSnake(parts) {
 
   ctx.restore();
 
-  // Draw the head on top
   drawWrappedRoundedRect(parts[0].x, parts[0].y, box, box, 7, "lime");
 }
 
@@ -482,10 +563,15 @@ function gameOver() {
 
   clearInterval(gameInterval);
   cancelAnimationFrame(animationFrameId);
+  stopTimer();
+
+  saveHighScore();
 
   pauseButton.textContent = "Pause Game";
 
   drawGameOverScreen();
 }
 
+updateHighScoreDisplay();
+updateTimerDisplay();
 drawStartScreen();
