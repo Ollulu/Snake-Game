@@ -680,7 +680,7 @@ function drawSingleSnakeHead(centerX, centerY, radius, facingDirection) {
   ctx.fill();
 
   // Eye settings
-  const eyeRadius = radius * 0.16;
+  const eyeRadius = radius * 0.2;
   let eye1X, eye1Y, eye2X, eye2Y;
 
   // Mouth settings
