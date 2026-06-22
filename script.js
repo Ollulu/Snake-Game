@@ -143,13 +143,21 @@ function createFood() {
   do {
     newFood = {
       x: Math.floor(Math.random() * 20) * box,
-      y: Math.floor(Math.random() * 20) * box
+      y: Math.floor(Math.random() * 20) * box,
+      shape: getRandomFoodShape()
     };
   } while (
     snake.some(part => part.x === newFood.x && part.y === newFood.y)
   );
 
   return newFood;
+}
+
+function getRandomFoodShape() {
+  const shapes = ["square", "circle", "triangle", "star"];
+  const randomIndex = Math.floor(Math.random() * shapes.length);
+
+  return shapes[randomIndex];
 }
 
 function showSetupControls() {
@@ -408,8 +416,8 @@ function drawGame(currentTime) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = "red";
-  ctx.fillRect(food.x, food.y, box, box);
+  drawFood();
+  
 
   const smoothParts = [];
 
@@ -565,6 +573,81 @@ function drawRoundedRect(x, y, width, height, radius) {
   ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
   ctx.lineTo(x, y + radius);
   ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawFood() {
+  if (!food) {
+    return;
+  }
+
+  if (food.shape === "square") {
+    drawSquareFood();
+  } else if (food.shape === "circle") {
+    drawCircleFood();
+  } else if (food.shape === "triangle") {
+    drawTriangleFood();
+  } else if (food.shape === "star") {
+    drawStarFood();
+  }
+}
+
+function drawSquareFood() {
+  ctx.fillStyle = "red";
+  ctx.fillRect(food.x, food.y, box, box);
+}
+
+function drawCircleFood() {
+  ctx.fillStyle = "red";
+
+  ctx.beginPath();
+  ctx.arc(
+    food.x + box / 2,
+    food.y + box / 2,
+    box / 2,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+}
+
+function drawTriangleFood() {
+  ctx.fillStyle = "red";
+
+  ctx.beginPath();
+  ctx.moveTo(food.x + box / 2, food.y);
+  ctx.lineTo(food.x, food.y + box);
+  ctx.lineTo(food.x + box, food.y + box);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawStarFood() {
+  ctx.fillStyle = "red";
+
+  const centerX = food.x + box / 2;
+  const centerY = food.y + box / 2;
+  const outerRadius = box / 2;
+  const innerRadius = box / 4;
+  const points = 5;
+
+  ctx.beginPath();
+
+  for (let i = 0; i < points * 2; i++) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const angle = (Math.PI / points) * i - Math.PI / 2;
+
+    const x = centerX + Math.cos(angle) * radius;
+    const y = centerY + Math.sin(angle) * radius;
+
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+
   ctx.closePath();
   ctx.fill();
 }
