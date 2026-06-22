@@ -456,11 +456,11 @@ function drawCurvedSnake(parts) {
   }
 
   if (parts.length === 1) {
-    drawWrappedRoundedRect(parts[0].x, parts[0].y, box, box, 6, "lime");
-    return;
+  drawSnakeHead(parts[0].x, parts[0].y, direction);
+  return;
   }
 
-    const centers = getContinuousCenters(parts);
+  const centers = getContinuousCenters(parts);
 
   ctx.save();
 
@@ -487,7 +487,7 @@ function drawCurvedSnake(parts) {
 
   ctx.restore();
 
-  drawWrappedRoundedRect(parts[0].x, parts[0].y, box, box, 7, "lime");
+  drawSnakeHead(parts[0].x, parts[0].y, direction);
 }
 
 function getContinuousCenters(parts) {
@@ -650,6 +650,105 @@ function drawStarFood() {
 
   ctx.closePath();
   ctx.fill();
+}
+
+function drawSnakeHead(x, y, facingDirection) {
+  const centerX = x + box / 2;
+  const centerY = y + box / 2;
+  const radius = box / 2;
+
+  const offsetsX = [-canvas.width, 0, canvas.width];
+  const offsetsY = [-canvas.height, 0, canvas.height];
+
+  for (let offsetX of offsetsX) {
+    for (let offsetY of offsetsY) {
+      drawSingleSnakeHead(
+        centerX + offsetX,
+        centerY + offsetY,
+        radius,
+        facingDirection
+      );
+    }
+  }
+}
+
+function drawSingleSnakeHead(centerX, centerY, radius, facingDirection) {
+  // Head
+  ctx.fillStyle = "lime";
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eye settings
+  const eyeRadius = radius * 0.12;
+  let eye1X, eye1Y, eye2X, eye2Y;
+
+  // Mouth settings
+  let mouthStartX, mouthStartY, mouthEndX, mouthEndY;
+
+  if (facingDirection === "UP") {
+    eye1X = centerX - radius * 0.28;
+    eye1Y = centerY - radius * 0.25;
+    eye2X = centerX + radius * 0.28;
+    eye2Y = centerY - radius * 0.25;
+
+    mouthStartX = centerX - radius * 0.22;
+    mouthStartY = centerY + radius * 0.15;
+    mouthEndX = centerX + radius * 0.22;
+    mouthEndY = centerY + radius * 0.15;
+  } else if (facingDirection === "DOWN") {
+    eye1X = centerX - radius * 0.28;
+    eye1Y = centerY + radius * 0.05;
+    eye2X = centerX + radius * 0.28;
+    eye2Y = centerY + radius * 0.05;
+
+    mouthStartX = centerX - radius * 0.22;
+    mouthStartY = centerY - radius * 0.18;
+    mouthEndX = centerX + radius * 0.22;
+    mouthEndY = centerY - radius * 0.18;
+  } else if (facingDirection === "LEFT") {
+    eye1X = centerX - radius * 0.22;
+    eye1Y = centerY - radius * 0.22;
+    eye2X = centerX - radius * 0.22;
+    eye2Y = centerY + radius * 0.22;
+
+    mouthStartX = centerX + radius * 0.10;
+    mouthStartY = centerY - radius * 0.18;
+    mouthEndX = centerX + radius * 0.10;
+    mouthEndY = centerY + radius * 0.18;
+  } else {
+    // RIGHT
+    eye1X = centerX + radius * 0.22;
+    eye1Y = centerY - radius * 0.22;
+    eye2X = centerX + radius * 0.22;
+    eye2Y = centerY + radius * 0.22;
+
+    mouthStartX = centerX - radius * 0.10;
+    mouthStartY = centerY - radius * 0.18;
+    mouthEndX = centerX - radius * 0.10;
+    mouthEndY = centerY + radius * 0.18;
+  }
+
+  // Eyes
+  ctx.fillStyle = "black";
+
+  ctx.beginPath();
+  ctx.arc(eye1X, eye1Y, eyeRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(eye2X, eye2Y, eyeRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+
+  ctx.beginPath();
+  ctx.moveTo(mouthStartX, mouthStartY);
+  ctx.lineTo(mouthEndX, mouthEndY);
+  ctx.stroke();
 }
 
 function gameOver() {
